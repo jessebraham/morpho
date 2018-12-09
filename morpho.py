@@ -33,15 +33,39 @@ class FileFormat(Enum):
     def extension(self) -> str:
         return self.value
 
+    @classmethod
+    def get(cls, extension: str) -> "FileFormat":
+        return cls(extension.lower().lstrip("."))
+
+    @classmethod
+    def get_alternate(cls, extension: str) -> "FileFormat":
+        ff = cls.get(extension)
+        return FileFormat.alac if ff is FileFormat.flac else FileFormat.flac
+
+    @classmethod
+    def path_for_alternate(cls, path: str) -> str:
+        (root, ext) = os.path.splitext(path)
+        old_format = cls.get(ext)
+        new_format = cls.get_alternate(ext)
+
+        root = root.replace(
+            os.sep.join(["", old_format.name, ""]),
+            os.sep.join(["", new_format.name, ""]),
+        )
+        ext = new_format.extension
+        return f"{root}.{ext}"
+
+    @classmethod
+    def alternate_exists(cls, path: str) -> bool:
+        return os.path.exists(cls.path_for_alternate(path))
+
 
 class Ffmpeg:
-    def __init__(self):
+    def __init__(self) -> None:
         self.loop = asyncio.get_event_loop()
 
     async def convert_file(self, path: str, convert_to: FileFormat) -> None:
-        (root, _) = os.path.splitext(path)
-        write_path = f"{root}.{convert_to.extension}"
-
+        write_path = FileFormat.path_for_alternate(path)
         command = ["ffmpeg", "-i", path, "-c:a", convert_to.codec, write_path]
 
         proc = await asyncio.create_subprocess_exec(
@@ -57,7 +81,8 @@ class Ffmpeg:
 
 
 class MorphoHandler(FileSystemEventHandler):
-    def __init__(self):
+    def __init__(self) -> None:
+        self.converter = Ffmpeg()
         self.logger = logging.getLogger("morpho")
 
     def format_event(self, event):
