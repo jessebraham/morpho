@@ -22,6 +22,11 @@ logging.basicConfig(
 
 
 class FileFormat(Enum):
+    """
+    An `Enum` representing the allowed file formats; limited to ALAC (.m4a)
+    and FLAC (.flac) only.
+    """
+
     alac = "m4a"
     flac = "flac"
 
@@ -34,26 +39,38 @@ class FileFormat(Enum):
         return self.value
 
     @classmethod
-    def get(cls, extension: str) -> "FileFormat":
-        return cls(extension.lower().lstrip("."))
+    def get(cls, path: str) -> "FileFormat":
+        (_, ext) = os.path.splitext(path)
+        return cls(ext.lstrip("."))
 
     @classmethod
-    def get_alternate(cls, extension: str) -> "FileFormat":
-        ff = cls.get(extension)
-        return FileFormat.alac if ff is FileFormat.flac else FileFormat.flac
+    def get_alternate(cls, path: str) -> "FileFormat":
+        old_format = cls.get(path)
+        return (
+            FileFormat.alac
+            if old_format is FileFormat.flac
+            else FileFormat.flac
+        )
 
     @classmethod
     def path_for_alternate(cls, path: str) -> str:
-        (root, ext) = os.path.splitext(path)
-        old_format = cls.get(ext)
-        new_format = cls.get_alternate(ext)
+        old_format = cls.get(path)
+        new_format = cls.get_alternate(path)
 
+        (root, _) = os.path.splitext(path)
         root = root.replace(
-            os.sep.join(["", old_format.name, ""]),
-            os.sep.join(["", new_format.name, ""]),
+            os.sep.join(["", old_format.codec, ""]),
+            os.sep.join(["", new_format.codec, ""]),
         )
         ext = new_format.extension
+
         return f"{root}.{ext}"
+
+    @classmethod
+    def to_alternate(cls, path: str) -> "FileFormat":
+        new_format = cls.get_alternate(path)
+        new_path = cls.path_for_alternate(path)
+        return (new_format, new_path)
 
     @classmethod
     def alternate_exists(cls, path: str) -> bool:
@@ -64,18 +81,18 @@ class Ffmpeg:
     def __init__(self) -> None:
         self.loop = asyncio.get_event_loop()
 
-    async def convert_file(self, path: str, convert_to: FileFormat) -> None:
-        write_path = FileFormat.path_for_alternate(path)
-        command = ["ffmpeg", "-i", path, "-c:a", convert_to.codec, write_path]
+    async def convert_file(self, path: str) -> None:
+        (new_format, new_path) = FileFormat.to_alternate(path)
+        command = ["ffmpeg", "-i", path, "-c:a", new_format.codec, new_path]
 
         proc = await asyncio.create_subprocess_exec(
             *command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
         await proc.wait()
 
-    def __call__(self, path: str, convert_to: FileFormat) -> None:
+    def __call__(self, path: str) -> None:
         self.loop.run_until_complete(
-            asyncio.ensure_future(self.convert_file(path, convert_to))
+            asyncio.ensure_future(self.convert_file(path))
         )
         self.loop.close()
 
