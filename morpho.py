@@ -4,6 +4,7 @@
 import asyncio
 import logging
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -102,22 +103,31 @@ class MorphoHandler(FileSystemEventHandler):
         self.converter = Ffmpeg()
         self.logger = logging.getLogger("morpho")
 
-    def format_event(self, event):
-        return f"{event.event_type}: '{event.src_path}'"
+    def on_created(self, event) -> None:
+        if event.is_directory or FileFormat.alternate_exists(event.src_path):
+            return
 
-    def on_created(self, event):
-        if not event.is_directory:
-            self.logger.info(self.format_event(event))
+        self.logger.info(f"[{event.event_type}] path: '{event.src_path}'")
+        self.converter(event.src_path)
 
-    def on_deleted(self, event):
-        if not event.is_directory:
-            self.logger.info(self.format_event(event))
-
-    def on_moved(self, event):
-        self.logger.info(f"{self.format_event(event)} -> '{event.dest_path}'")
+    def on_moved(self, event) -> None:
+        self.logger.info(
+            f"[{event.event_type}] moved '{event.src_path}' to "
+            f"'{event.dest_path}'"
+        )
+        if FileFormat.alternate_exists(event.src_path):
+            (_, old_path) = FileFormat.to_alternate(event.src_path)
+            (_, new_path) = FileFormat.to_alternate(event.dest_path)
+            shutil.move(old_path, new_path)
+        else:
+            self.converter(event.src_path)
 
 
 if __name__ == "__main__":
+    if not shutil.which("ffmpeg"):
+        print("could not find 'ffmpeg' on PATH; please ensure it is installed")
+        sys.exit()
+
     path = sys.argv[1] if len(sys.argv) > 1 else "."
     event_handler = MorphoHandler()
 
