@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import subprocess
 
 from enum import Enum
 from typing import List
@@ -70,3 +71,26 @@ class VideoFormat(BaseFileFormat):
             "fast",
         ]
         return audio_params + video_params
+
+
+class Ffmpeg:
+    @staticmethod
+    def build_command(path: str, fmt: BaseFileFormat) -> List[str]:
+        command = ["ffmpeg", "-i", path]
+        command += fmt.params
+        command += [fmt.update_extension(path)]
+        return command
+
+    @staticmethod
+    def run(command: List[str]) -> bool:
+        try:
+            p = subprocess.run(command)
+        except Exception:
+            return False
+
+        return p.returncode == 0
+
+    @classmethod
+    def convert(cls, path: str, fmt: BaseFileFormat) -> bool:
+        command = cls.build_command(path, fmt)
+        return cls.run(command)

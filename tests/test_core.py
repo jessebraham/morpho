@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from morpho.core import AudioFormat, VideoFormat
+from morpho.core import AudioFormat, VideoFormat, Ffmpeg
 
 
 def test_base_file_format_properties():
@@ -61,3 +61,32 @@ def test_video_file_format_properties():
     ]
     fmt = VideoFormat.mp4
     assert fmt.params == audio_params + video_params
+
+
+def test_ffmpeg_build_command():
+    path = "/path/to/some/media/audio.m4a"
+    fmt = AudioFormat.flac
+
+    command = Ffmpeg.build_command(path, fmt)
+
+    assert command == [
+        "ffmpeg",
+        "-i",
+        path,
+        "-c:a",
+        "flac",
+        fmt.update_extension(path),
+    ]
+
+
+def test_ffmpeg_run():
+    command = ["/bin/true"]
+    assert Ffmpeg.run(command) is True
+
+    command = ["/bin/false"]
+    assert Ffmpeg.run(command) is False
+
+
+def test_ffmpeg_run_handles_exception():
+    command = [""]
+    assert Ffmpeg.run(command) is False
