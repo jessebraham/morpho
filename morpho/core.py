@@ -22,10 +22,9 @@ class BaseFileFormat(Enum):
     def extension(self) -> str:
         return self.value
 
-    @classmethod
-    def change_extension(cls, path: str, fmt: "BaseFileFormat") -> str:
+    def update_extension(self, path: str) -> str:
         (head, _) = os.path.splitext(path)
-        return f"{head}.{fmt.extension}"
+        return f"{head}.{self.extension}"
 
     @classmethod
     def get(cls, path: str) -> "BaseFileFormat":

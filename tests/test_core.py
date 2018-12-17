@@ -12,13 +12,21 @@ def test_base_file_format_properties():
     assert fmt.codec == fmt.extension == "mp4"
 
 
-def test_base_file_format_change_extension():
+def test_base_file_format_update_extension_audio():
     path = "/path/to/some/media/audio.m4a"
-    new_path = AudioFormat.change_extension(path, AudioFormat.flac)
+    fmt = AudioFormat.flac
+
+    new_path = fmt.update_extension(path)
+
     assert new_path == "/path/to/some/media/audio.flac"
 
+
+def test_base_file_format_update_extension_video():
     path = "/path/to/some/media/video.avi"
-    new_path = VideoFormat.change_extension(path, VideoFormat.mp4)
+    fmt = VideoFormat.mp4
+
+    new_path = fmt.update_extension(path)
+
     assert new_path == "/path/to/some/media/video.mp4"
 
 
