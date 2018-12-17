@@ -11,13 +11,13 @@ from typing import List
 from morpho.core import BaseFileFormat, AudioFormat, Ffmpeg, VideoFormat
 
 
-def ensure_path_exists(path: str) -> None:
+def ensure_path_exists(path: Path) -> None:
     if not os.path.exists(path):
         click.secho(f"ERROR: '{path}' does not exist.", fg="red")
         sys.exit(1)
 
 
-def find_media(path: str, fmt: BaseFileFormat) -> List[str]:
+def find_media(path: Path, fmt: BaseFileFormat) -> List[Path]:
     audio_extensions = [f.extension for f in AudioFormat]
     video_extensions = [f.extension for f in VideoFormat]
     extensions = [
@@ -27,11 +27,11 @@ def find_media(path: str, fmt: BaseFileFormat) -> List[str]:
     return [
         f
         for extension in extensions
-        for f in Path(path).rglob(f"*.{extension}")
+        for f in path.rglob(f"*.{extension}")
     ]
 
 
-def get_file_list(path: str, fmt: BaseFileFormat) -> List[str]:
+def get_file_list(path: Path, fmt: BaseFileFormat) -> List[Path]:
     if os.path.isdir(path):
         files = find_media(path, fmt)
     elif os.path.isfile(path):
@@ -42,9 +42,9 @@ def get_file_list(path: str, fmt: BaseFileFormat) -> List[str]:
 
 
 def convert(path: str, fmt: BaseFileFormat) -> None:
-    ensure_path_exists(path)
+    ensure_path_exists(Path(path))
 
-    files = get_file_list(path, fmt)
+    files = get_file_list(Path(path), fmt)
     if not files:
         click.secho("No files found.", fg="red")
         return

@@ -4,6 +4,7 @@ import os
 import subprocess
 
 from enum import Enum
+from pathlib import Path
 from typing import List
 
 
@@ -23,7 +24,11 @@ class BaseFileFormat(Enum):
     def extension(self) -> str:
         return self.value
 
-    def update_extension(self, path: str) -> str:
+    @property
+    def params(self) -> List[str]:
+        pass
+
+    def update_extension(self, path: Path) -> str:
         (head, _) = os.path.splitext(path)
         return f"{head}.{self.extension}"
 
@@ -75,8 +80,8 @@ class VideoFormat(BaseFileFormat):
 
 class Ffmpeg:
     @staticmethod
-    def build_command(path: str, fmt: BaseFileFormat) -> List[str]:
-        command = ["ffmpeg", "-i", path]
+    def build_command(path: Path, fmt: BaseFileFormat) -> List[str]:
+        command = ["ffmpeg", "-i", str(path)]
         command += fmt.params
         command += [fmt.update_extension(path)]
         return command
@@ -92,6 +97,6 @@ class Ffmpeg:
             return False
 
     @classmethod
-    def convert(cls, path: str, fmt: BaseFileFormat) -> bool:
+    def convert(cls, path: Path, fmt: BaseFileFormat) -> bool:
         command = cls.build_command(path, fmt)
         return cls.run(command)
