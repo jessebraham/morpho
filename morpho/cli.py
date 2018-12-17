@@ -8,8 +8,7 @@ import sys
 from pathlib import Path
 from typing import List
 
-from morpho.core import BaseFileFormat, AudioFormat, VideoFormat
-from morpho.core import Ffmpeg
+from morpho.core import BaseFileFormat, AudioFormat, Ffmpeg, VideoFormat
 
 
 def ensure_path_exists(path: str) -> None:
@@ -32,17 +31,25 @@ def find_media(path: str, fmt: BaseFileFormat) -> List[str]:
     ]
 
 
-def convert_files(path: str, fmt: BaseFileFormat) -> None:
+def get_file_list(path: str, fmt: BaseFileFormat) -> List[str]:
     if os.path.isdir(path):
         files = find_media(path, fmt)
     elif os.path.isfile(path):
         files = [path]
     else:
         files = []
+    return files
+
+
+def convert(path: str, fmt: BaseFileFormat) -> None:
+    ensure_path_exists(path)
+
+    files = get_file_list(path, fmt)
+    if not files:
+        click.secho("No files found.", fg="red")
+        return
 
     click.secho(f"Found {len(files)} file(s).", fg="green")
-    if not files:
-        return
 
     for f in files:
         click.echo(f"Converting '{f}' to {fmt.codec}")
@@ -61,18 +68,16 @@ def cli():
 @click.option(
     "--codec", type=click.Choice(["alac", "flac"]), help="Output codec."
 )
-def audio(path, codec):
-    ensure_path_exists(path)
+def audio(path, codec) -> None:
     fmt = AudioFormat.get(codec)
-    convert_files(path, fmt)
+    convert(path, fmt)
 
 
 @cli.command()
 @click.argument("path")
-def video(path):
-    ensure_path_exists(path)
+def video(path) -> None:
     fmt = VideoFormat.mp4
-    convert_files(path, fmt)
+    convert(path, fmt)
 
 
 if __name__ == "__main__":
