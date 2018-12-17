@@ -67,7 +67,7 @@ class VideoFormat(BaseFileFormat):
             "libx264",
             "-profile:v",
             "main",
-            "-pre",
+            "-preset",
             "fast",
         ]
         return audio_params + video_params
@@ -84,11 +84,12 @@ class Ffmpeg:
     @staticmethod
     def run(command: List[str]) -> bool:
         try:
-            p = subprocess.run(command)
+            p = subprocess.run(
+                command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            return p.returncode == 0
         except Exception:
             return False
-
-        return p.returncode == 0
 
     @classmethod
     def convert(cls, path: str, fmt: BaseFileFormat) -> bool:

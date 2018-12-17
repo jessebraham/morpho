@@ -56,7 +56,7 @@ def test_video_file_format_properties():
         "libx264",
         "-profile:v",
         "main",
-        "-pre",
+        "-preset",
         "fast",
     ]
     fmt = VideoFormat.mp4
