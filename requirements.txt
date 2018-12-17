@@ -1,1 +1,2 @@
+Click==7.0
 watchdog==0.9.0
