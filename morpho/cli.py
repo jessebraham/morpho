@@ -24,11 +24,7 @@ def find_media(path: Path, fmt: BaseFileFormat) -> List[Path]:
         f for f in audio_extensions + video_extensions if f != fmt.extension
     ]
 
-    return [
-        f
-        for extension in extensions
-        for f in path.rglob(f"*.{extension}")
-    ]
+    return [f for extension in extensions for f in path.rglob(f"*.{extension}")]
 
 
 def get_file_list(path: Path, fmt: BaseFileFormat) -> List[Path]:
@@ -42,9 +38,10 @@ def get_file_list(path: Path, fmt: BaseFileFormat) -> List[Path]:
 
 
 def convert(path: str, fmt: BaseFileFormat) -> None:
-    ensure_path_exists(Path(path))
+    p = Path(path)
+    ensure_path_exists(p)
 
-    files = get_file_list(Path(path), fmt)
+    files = get_file_list(p, fmt)
     if not files:
         click.secho("No files found.", fg="red")
         return
@@ -66,16 +63,19 @@ def cli():
 @cli.command()
 @click.argument("path")
 @click.option(
-    "--codec", type=click.Choice(["alac", "flac"]), help="Output codec."
+    "--format",
+    required=True,
+    type=click.Choice(["alac", "flac"]),
+    help="Output format.",
 )
-def audio(path, codec) -> None:
-    fmt = AudioFormat.get(codec)
+def audio(path: str, format: str) -> None:
+    fmt = AudioFormat.get(format)
     convert(path, fmt)
 
 
 @cli.command()
 @click.argument("path")
-def video(path) -> None:
+def video(path: str) -> None:
     fmt = VideoFormat.mp4
     convert(path, fmt)
 
