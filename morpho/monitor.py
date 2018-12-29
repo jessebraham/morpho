@@ -4,10 +4,10 @@ import asyncio
 import logging
 import time
 
-from typing import Generator
-
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+
+from morpho.core import AudioFormat, VideoFormat, enum_value_exists
 
 
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -18,13 +18,28 @@ class MorphoHandler(FileSystemEventHandler):
         self.logger = logger
         self.queue = queue
 
-    def on_created(self, event) -> Generator:
-        self.logger.info(event)
-        yield from self.queue.put(event)
+    def on_created(self, event) -> None:
+        if event.is_directory:
+            return  # ignore directory creation
 
-    def on_moved(self, event) -> Generator:
+        if not self.has_valid_extension(event.src_path):
+            return  # ignore unsupported file extensions
+
         self.logger.info(event)
-        yield from self.queue.put(event)
+        self.queue.put_nowait(event)
+
+    def on_moved(self, event) -> None:
+        if not self.has_valid_extension(event.src_path):
+            return  # ignore unsupported file extensions
+
+        self.logger.info(event)
+        self.queue.put_nowait(event)
+
+    def has_valid_extension(self, path: str) -> bool:
+        is_audio = enum_value_exists(path, AudioFormat)
+        is_video = enum_value_exists(path, VideoFormat)
+        return is_audio or is_video
+
 
 class MorphoWorker:
     def __init__(self, logger: logging.Logger, queue: asyncio.Queue) -> None:
