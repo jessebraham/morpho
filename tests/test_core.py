@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from morpho.core import AudioFormat, VideoFormat, Ffmpeg
+from morpho.core import AudioFormat, Ffmpeg, VideoFormat, swap_extension
 
 
 def test_base_file_format_properties():
@@ -10,24 +10,6 @@ def test_base_file_format_properties():
 
     fmt = VideoFormat.mp4
     assert fmt.codec == fmt.extension == "mp4"
-
-
-def test_base_file_format_update_extension_audio():
-    path = "/path/to/some/media/audio.m4a"
-    fmt = AudioFormat.flac
-
-    new_path = fmt.update_extension(path)
-
-    assert new_path == "/path/to/some/media/audio.flac"
-
-
-def test_base_file_format_update_extension_video():
-    path = "/path/to/some/media/video.avi"
-    fmt = VideoFormat.mp4
-
-    new_path = fmt.update_extension(path)
-
-    assert new_path == "/path/to/some/media/video.mp4"
 
 
 def test_base_file_format_get():
@@ -63,6 +45,24 @@ def test_video_file_format_properties():
     assert fmt.params == audio_params + video_params
 
 
+def test_swap_extension_audio():
+    path = "/path/to/some/media/audio.m4a"
+    fmt = AudioFormat.flac
+
+    new_path = swap_extension(path, fmt)
+
+    assert new_path == "/path/to/some/media/audio.flac"
+
+
+def test_change_extension_video():
+    path = "/path/to/some/media/video.avi"
+    fmt = VideoFormat.mp4
+
+    new_path = swap_extension(path, fmt)
+
+    assert new_path == "/path/to/some/media/video.mp4"
+
+
 def test_ffmpeg_build_command():
     path = "/path/to/some/media/audio.m4a"
     fmt = AudioFormat.flac
@@ -75,7 +75,7 @@ def test_ffmpeg_build_command():
         path,
         "-c:a",
         "flac",
-        fmt.update_extension(path),
+        swap_extension(path, fmt),
     ]
 
 

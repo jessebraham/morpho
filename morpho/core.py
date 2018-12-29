@@ -3,6 +3,7 @@
 import os
 import subprocess
 
+from abc import abstractmethod
 from enum import Enum
 from pathlib import Path
 from typing import List
@@ -10,10 +11,12 @@ from typing import List
 
 class BaseFileFormat(Enum):
     """
-    A generic file format Enum type, with properties wrapping the default
+    An abstract file-format Enum type. Contains properties wrapping the default
     'name' and 'value' attributes with 'codec' and 'extension' respectively.
 
-    Additionally includes a handful of common helper functions.
+    Additionally includes an abstract 'params' property, to be implemented by
+    child classes, as well as a `get` method for obtaining the appropriate
+    Enum value given a filesystem path.
     """
 
     @property
@@ -25,12 +28,9 @@ class BaseFileFormat(Enum):
         return self.value
 
     @property
+    @abstractmethod
     def params(self) -> List[str]:
-        pass
-
-    def update_extension(self, path: Path) -> str:
-        (head, _) = os.path.splitext(path)
-        return f"{head}.{self.extension}"
+        ...
 
     @classmethod
     def get(cls, path: str) -> "BaseFileFormat":
@@ -40,8 +40,8 @@ class BaseFileFormat(Enum):
 
 class AudioFormat(BaseFileFormat):
     """
-    An enumeration of Audio file formats. The name represents the codec while
-    the value holds its extension.
+    An enumeration of supported audio file formats. The name and value
+    attributes represent the file codec and extension respectively.
     """
 
     alac = "m4a"
@@ -54,8 +54,8 @@ class AudioFormat(BaseFileFormat):
 
 class VideoFormat(BaseFileFormat):
     """
-    An enumeration of Video file formats. The name represents the codec while
-    the value holds its extension.
+    An enumeration of supported video file formats. The name and value
+    attributes represent the file codec and extension respectively.
     """
 
     avi = "avi"
@@ -78,12 +78,22 @@ class VideoFormat(BaseFileFormat):
         return audio_params + video_params
 
 
+def swap_extension(path: Path, fmt: BaseFileFormat) -> str:
+    (head, _) = os.path.splitext(path)
+    return f"{head}.{fmt.extension}"
+
+
 class Ffmpeg:
+    @classmethod
+    def convert(cls, path: Path, fmt: BaseFileFormat) -> bool:
+        command = cls.build_command(path, fmt)
+        return cls.run(command)
+
     @staticmethod
     def build_command(path: Path, fmt: BaseFileFormat) -> List[str]:
         command = ["ffmpeg", "-i", str(path)]
         command += fmt.params
-        command += [fmt.update_extension(path)]
+        command += [swap_extension(path, fmt)]
         return command
 
     @staticmethod
@@ -95,8 +105,3 @@ class Ffmpeg:
             return p.returncode == 0
         except Exception:
             return False
-
-    @classmethod
-    def convert(cls, path: Path, fmt: BaseFileFormat) -> bool:
-        command = cls.build_command(path, fmt)
-        return cls.run(command)
