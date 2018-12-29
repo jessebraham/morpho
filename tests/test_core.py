@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from morpho.core import AudioFormat, Ffmpeg, VideoFormat, swap_extension
+from morpho.core import (
+    AudioFormat,
+    Ffmpeg,
+    VideoFormat,
+    enum_value_exists,
+    swap_extension,
+)
 
 
 def test_base_file_format_properties():
@@ -45,24 +51,6 @@ def test_video_file_format_properties():
     assert fmt.params == audio_params + video_params
 
 
-def test_swap_extension_audio():
-    path = "/path/to/some/media/audio.m4a"
-    fmt = AudioFormat.flac
-
-    new_path = swap_extension(path, fmt)
-
-    assert new_path == "/path/to/some/media/audio.flac"
-
-
-def test_change_extension_video():
-    path = "/path/to/some/media/video.avi"
-    fmt = VideoFormat.mp4
-
-    new_path = swap_extension(path, fmt)
-
-    assert new_path == "/path/to/some/media/video.mp4"
-
-
 def test_ffmpeg_build_command():
     path = "/path/to/some/media/audio.m4a"
     fmt = AudioFormat.flac
@@ -90,3 +78,30 @@ def test_ffmpeg_run():
 def test_ffmpeg_run_handles_exception():
     command = [""]
     assert Ffmpeg.run(command) is False
+
+
+def test_enum_value_exists():
+    assert enum_value_exists("/path/to/some/media.flac", AudioFormat)
+    assert enum_value_exists("test.mp4", VideoFormat)
+
+    assert not enum_value_exists("/path/to/some/media.mp3", AudioFormat)
+    assert not enum_value_exists("test.mov", VideoFormat)
+    assert not enum_value_exists("", AudioFormat)
+
+
+def test_swap_extension_audio():
+    path = "/path/to/some/media/audio.m4a"
+    fmt = AudioFormat.flac
+
+    new_path = swap_extension(path, fmt)
+
+    assert new_path == "/path/to/some/media/audio.flac"
+
+
+def test_swap_extension_video():
+    path = "/path/to/some/media/video.avi"
+    fmt = VideoFormat.mp4
+
+    new_path = swap_extension(path, fmt)
+
+    assert new_path == "/path/to/some/media/video.mp4"
