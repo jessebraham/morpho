@@ -68,20 +68,20 @@ def cli():
 
 @cli.command()
 @click.argument("path")
-@click.option(
-    "--format",
-    required=True,
-    type=click.Choice(["alac", "flac"]),
-    help="Output format.",
-)
-def audio(path: str, format: str) -> None:
-    fmt = AudioFormat.get(format)
+def audio(path: str) -> None:
+    # Convert to whichever format is *not* provided.
+    fmt = (
+        AudioFormat.alac
+        if AudioFormat.get(path) == AudioFormat.flac
+        else AudioFormat.flac
+    )
     convert(path, fmt)
 
 
 @cli.command()
 @click.argument("path")
 def video(path: str) -> None:
+    # For the time being, *always* convert to MP4.
     fmt = VideoFormat.mp4
     convert(path, fmt)
 
