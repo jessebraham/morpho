@@ -18,6 +18,14 @@ def test_base_file_format_properties():
     assert fmt.codec == fmt.extension == "mp4"
 
 
+def test_base_file_format_all():
+    formats = AudioFormat.all()
+    assert formats == [AudioFormat.alac, AudioFormat.flac]
+
+    formats = VideoFormat.all()
+    assert formats == [VideoFormat.avi, VideoFormat.mp4, VideoFormat.mkv]
+
+
 def test_base_file_format_get():
     path = "/path/to/some/media/audio.flac"
     fmt = AudioFormat.get(path)
@@ -26,6 +34,10 @@ def test_base_file_format_get():
     path = "/path/to/some/media/video.mkv"
     fmt = VideoFormat.get(path)
     assert fmt == VideoFormat.mkv
+
+    path = "/path/to/some/unknown/format.123"
+    fmt = AudioFormat.get(path)
+    assert fmt is None
 
 
 def test_audio_file_format_properties():

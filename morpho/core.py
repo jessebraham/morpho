@@ -6,7 +6,7 @@ import subprocess
 from abc import abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import List, Type
+from typing import List, Optional, Type
 
 
 class BaseFileFormat(Enum):
@@ -33,9 +33,16 @@ class BaseFileFormat(Enum):
         ...
 
     @classmethod
-    def get(cls, path: str) -> "BaseFileFormat":
+    def all(cls) -> List["BaseFileFormat"]:
+        return [fmt for fmt in cls]
+
+    @classmethod
+    def get(cls, path: str) -> Optional["BaseFileFormat"]:
         (_, ext) = os.path.splitext(path)
-        return cls(ext.lstrip("."))
+        try:
+            return cls(ext.lstrip("."))
+        except ValueError:
+            return None
 
 
 class AudioFormat(BaseFileFormat):
@@ -103,10 +110,7 @@ class Ffmpeg:
 
 
 def enum_value_exists(path: str, fmt: Type[BaseFileFormat]) -> bool:
-    try:
-        return fmt.get(path) is not None
-    except ValueError:
-        return False
+    return fmt.get(path) is not None
 
 
 def swap_extension(path: Path, fmt: BaseFileFormat) -> str:
