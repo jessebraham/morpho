@@ -5,10 +5,12 @@ import click
 import os
 import sys
 
+import inflect
+
 from pathlib import Path
 from typing import List
 
-from morpho.core import BaseFileFormat, AudioFormat, Ffmpeg, VideoFormat
+from morpho.core import AudioFormat, BaseFileFormat, Ffmpeg, VideoFormat
 
 
 def ensure_path_exists(path: Path) -> None:
@@ -46,13 +48,17 @@ def convert(path: str, fmt: BaseFileFormat) -> None:
         click.secho("No files found.", fg="red")
         return
 
-    click.secho(f"Found {len(files)} file(s).", fg="green")
+    e = inflect.engine()
+    num_files = len(files)
+    file_maybe_plural = e.plural("file", num_files)
+
+    click.secho(f"Found {num_files} {file_maybe_plural}.", fg="green")
 
     for f in files:
         click.echo(f"Converting '{f}' to {fmt.codec}")
         Ffmpeg.convert(f, fmt)
 
-    click.secho(f"Converted {len(files)} file(s)!", fg="green")
+    click.secho(f"Converted {num_files} {file_maybe_plural}!", fg="green")
 
 
 @click.group()
