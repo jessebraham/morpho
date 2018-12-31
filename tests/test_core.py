@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from morpho.core import (
-    AudioFormat,
-    Ffmpeg,
-    VideoFormat,
-    enum_value_exists,
-    swap_extension,
-)
+from morpho.core import AudioFormat, Ffmpeg, VideoFormat, swap_extension
 
 
 def test_base_file_format_properties():
@@ -90,15 +84,6 @@ def test_ffmpeg_run():
 def test_ffmpeg_run_handles_exception():
     command = [""]
     assert Ffmpeg.run(command) is False
-
-
-def test_enum_value_exists():
-    assert enum_value_exists("/path/to/some/media.flac", AudioFormat)
-    assert enum_value_exists("test.mp4", VideoFormat)
-
-    assert not enum_value_exists("/path/to/some/media.mp3", AudioFormat)
-    assert not enum_value_exists("test.mov", VideoFormat)
-    assert not enum_value_exists("", AudioFormat)
 
 
 def test_swap_extension_audio():

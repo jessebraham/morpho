@@ -6,7 +6,7 @@ import subprocess
 from abc import abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Type
+from typing import List, Optional
 
 
 class BaseFileFormat(Enum):
@@ -107,10 +107,6 @@ class Ffmpeg:
             return p.returncode == 0
         except Exception:
             return False
-
-
-def enum_value_exists(path: str, fmt: Type[BaseFileFormat]) -> bool:
-    return fmt.get(path) is not None
 
 
 def swap_extension(path: Path, fmt: BaseFileFormat) -> str:
